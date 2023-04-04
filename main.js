@@ -1,4 +1,4 @@
-import { topology } from "./src/topology";
+import { topology } from "./lib/topology";
 import "./style.css";
 
 const canvas = document.getElementById("topology");
@@ -13,7 +13,7 @@ const line_color = document.getElementById("line_color");
 if (!(line_color instanceof HTMLInputElement))
   throw new Error("line_color is not HTMLInputElement");
 
-/** @type {import("./src/topology").TopologyOptions} */
+/** @type {import("./lib/topology").TopologyOptions} */
 let options = {
   speed: 1,
   background_color: [0, 0, 0],
