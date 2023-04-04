@@ -1,5 +1,5 @@
 {
-  "name": "topology-canvas",
+  "name": "topology-renderer",
   "description": "A WebGL implementation of a topology renderer",
   "author": "Loris Sigrist",
   "version": "0.1.0",
