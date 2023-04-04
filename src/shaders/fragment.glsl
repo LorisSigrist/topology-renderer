@@ -99,11 +99,6 @@ float snoise(vec3 v)
   m = m * m;
   return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),
                                 dot(p2,x2), dot(p3,x3) ) );
-  }
-
-// Linear interpolation between two colors
-vec3 color_lerp(vec3 a, vec3 b, float t){
-    return a + (b - a) * t;
 }
 
 const float height_span = 255.0;
@@ -113,7 +108,7 @@ const float line_width = 2.0;
 void main(){
     vec2 uv = vec2(fragCoord.x * aspect_ratio, fragCoord.y);
 
-    float height = snoise(vec3(uv, time / 100000.0 ));
+    float height = snoise(vec3(uv, time / 100.0 ));
 
     //Check if the height is in one of the bands
     float mod_height = mod(height * height_span, line_spacing);

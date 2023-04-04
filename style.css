@@ -4,3 +4,23 @@ body {
   position: fixed;
   inset: 0;
 }
+
+#options {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1;
+
+  padding: 1rem;
+  background: #ffffff55;
+  border-radius: 0.5rem;
+
+  border: 1px solid #fff;
+
+  backdrop-filter: blur(4px);
+}
+
+#options input {
+  display: block;
+  margin-bottom: 1rem;
+}

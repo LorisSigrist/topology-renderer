@@ -4,27 +4,141 @@ import fragment_shader_source from "./shaders/fragment.glsl?raw";
 
 /** @typedef {[number, number, number]} vec3 */
 
-/** @type {vec3} */
-const BACKGROUND_COLOR = [0, 22 / 255, 37 / 255];
-
-/** @type {vec3} */
-const LINE_COLOR = [41 / 255, 56 / 255, 76 / 255];
+/**
+ * @typedef {{
+ *  background_color: vec3,
+ *  line_color: vec3,
+ *  speed : number
+ * }} FullTopologyOptions
+ */
 
 /**
- * @param {HTMLCanvasElement} canvas
+ * @typedef {Partial<FullTopologyOptions>} TopologyOptions
  */
-export const topology = (canvas) => {
 
-    
+/** @type {FullTopologyOptions} */
+const DEFAULT_OPTIONS = {
+  background_color:  [0, 22, 37],
+  line_color: [41, 56, 76],
+  speed: 1,
+};
+
+/**
+ * Draws an animated topology map on the given canvas
+ * @param {HTMLCanvasElement} canvas
+ * @param {TopologyOptions} partial_options
+ */
+export const topology = (canvas, partial_options = DEFAULT_OPTIONS) => {
+  let options = { ...DEFAULT_OPTIONS, ...partial_options };
+
   // Initialize WebGL
+  const gl = get_context(canvas);
+  const delete_rect = set_up_rect(gl);
+
+  const { program, vertex_shader, fragment_shader } = create_program(
+    gl,
+    vertex_shader_source,
+    fragment_shader_source
+  );
+
+  gl.useProgram(program);
+
+  //The shaders are no longer needed. They will get deleted when the program using them is freed
+  gl.deleteShader(vertex_shader);
+  gl.deleteShader(fragment_shader);
+
+  //Get the location of the attributes and uniforms
+  const position_attribute_location = gl.getAttribLocation(program, "position");
+  gl.vertexAttribPointer(position_attribute_location, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(position_attribute_location);
+
+  //Get uniform locations
+  const u_background_color = gl.getUniformLocation(program, "background_color");
+  const u_line_color = gl.getUniformLocation(program, "line_color");
+  const u_aspect_ratio = gl.getUniformLocation(program, "aspect_ratio");
+  const u_time = gl.getUniformLocation(program, "time");
+
+  /**
+   * Keeps track of the current animation frame so it can be cancelled if needed
+   * @type {number | null}
+   */
+  let frame = null;
+
+  const render = () => {
+    //Set colors
+    const background_color = to_glsl_color(options.background_color);
+    const line_color = to_glsl_color(options.line_color);
+
+    // Resize canvas to match the size it's displayed
+    const canvas_element_width = document.body.clientWidth;
+    const canvas_element_height = document.body.clientHeight;
+
+    const canvas_render_width = canvas_element_width * window.devicePixelRatio;
+    const canvas_render_height =
+      canvas_element_height * window.devicePixelRatio;
+
+    canvas.width = canvas_render_width;
+    canvas.height = canvas_render_height;
+
+    canvas.style.width = canvas_element_width + "px";
+    canvas.style.height = canvas_element_height + "px";
+
+    const aspect_ratio = canvas_render_width / canvas_render_height;
+
+    gl.uniform3f(u_background_color, ...background_color);
+    gl.uniform3f(u_line_color, ...line_color);
+
+    gl.uniform1f(u_aspect_ratio, aspect_ratio);
+    gl.uniform1f(u_time, (performance.now() / 1000) * options.speed);
+
+    gl.clearColor(...background_color, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.viewport(0, 0, canvas_render_width, canvas_render_height);
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+
+    frame = requestAnimationFrame(render);
+  };
+
+  frame = requestAnimationFrame(render);
+
+  return {
+    /** @param {TopologyOptions} new_options */
+    update(new_options) {
+      options = { ...options, ...new_options };
+    },
+    destroy() {
+      if (frame) cancelAnimationFrame(frame);
+      gl.deleteProgram(program);
+      delete_rect();
+    },
+  };
+};
+
+/**
+ * Return WebGLRenderingContext or throw
+ * @param {HTMLCanvasElement} canvas
+ * @returns {WebGLRenderingContext}
+ */
+function get_context(canvas) {
   const gl = canvas.getContext("webgl");
   if (!gl) throw new Error("gl is not WebGLRenderingContext");
+  return gl;
+}
 
+/**
+ * Sets up and binds the vertex and index buffers for the quad,
+ * and returns a function that will delete them
+ *
+ * @param {WebGLRenderingContext} gl
+ * @returns {()=>void} Cleanup function that will delete the quad buffers
+ */
+function set_up_rect(gl) {
   //Initialize and Bind Vertex Buffer for Quad
   const vertexBuffer = gl.createBuffer();
   const indexBuffer = gl.createBuffer();
   const vertices = [-1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0];
   const indecies = [3, 2, 1, 3, 1, 0];
+
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -34,6 +148,23 @@ export const topology = (canvas) => {
     gl.STATIC_DRAW
   );
 
+  return () => {
+    gl.deleteBuffer(vertexBuffer);
+    gl.deleteBuffer(indexBuffer);
+  };
+}
+
+/**
+ * Creates a WebGLProgram from the given vertex and fragment shader code
+ * @param {WebGLRenderingContext} gl
+ * @param {string} vertex_shader_code
+ * @param {string} fragment_shader_code
+ * @returns {{
+ * program: WebGLProgram,
+ * vertex_shader: WebGLShader,
+ * fragment_shader: WebGLShader}}
+ */
+function create_program(gl, vertex_shader_code, fragment_shader_code) {
   const vertex_shader = gl.createShader(gl.VERTEX_SHADER);
   if (!vertex_shader) throw new Error("vertexShader is not WebGLShader");
   gl.shaderSource(vertex_shader, vertex_shader_source);
@@ -76,68 +207,15 @@ export const topology = (canvas) => {
     throw new Error("Could not link program - Check console for details");
   }
 
-  gl.useProgram(program);
+  return { program, vertex_shader, fragment_shader };
+}
 
-  //The shaders are no longer needed. They will get deleted when the program is deleted
-  gl.deleteShader(vertex_shader);
-  gl.deleteShader(fragment_shader);
-
-
-  //Get the location of the attributes and uniforms
-  const position_attribute_location = gl.getAttribLocation(program, "position");
-  gl.vertexAttribPointer(position_attribute_location, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(position_attribute_location);
-
-  //Get uniform locations
-  const u_background_color = gl.getUniformLocation(program, "background_color");
-  gl.uniform3f(u_background_color, ...BACKGROUND_COLOR);
-
-  const u_line_color = gl.getUniformLocation(program, "line_color");
-  gl.uniform3f(u_line_color, ...LINE_COLOR);
-
-  const u_aspect_ratio = gl.getUniformLocation(program, "aspect_ratio");
-  const u_time = gl.getUniformLocation(program, "time");
-
-  /** @type {number | null} */
-  let frame = null;
-
-  const render = () => {
-    const canvas_element_width = document.body.clientWidth;
-    const canvas_element_height = document.body.clientHeight;
-
-    const canvas_render_width = canvas_element_width * window.devicePixelRatio;
-    const canvas_render_height =
-      canvas_element_height * window.devicePixelRatio;
-
-    // Set canvas size
-    canvas.width = canvas_render_width;
-    canvas.height = canvas_render_height;
-
-    canvas.style.width = canvas_element_width + "px";
-    canvas.style.height = canvas_element_height + "px";
-
-    const aspect_ratio = canvas_render_width / canvas_render_height;
-
-    gl.uniform1f(u_aspect_ratio, aspect_ratio);
-    gl.uniform1f(u_time, performance.now());
-
-    gl.clearColor(...BACKGROUND_COLOR, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.viewport(0, 0, canvas_render_width, canvas_render_height);
-    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
-
-    frame = requestAnimationFrame(render);
-  };
-
-  frame = requestAnimationFrame(render);
-
-  return {
-    update() {},
-    destroy() {
-      if (frame) cancelAnimationFrame(frame);
-      gl.deleteProgram(program);
-      gl.deleteBuffer(vertexBuffer);
-      gl.deleteBuffer(indexBuffer);
-    },
-  };
-};
+/**
+ * Converts a color from [r, g, b] to [r/255, g/255, b/255]
+ * @param {vec3} color
+ * @returns {vec3}
+ */
+function to_glsl_color(color) {
+  // @ts-ignore
+  return color.map((c) => c / 255);
+}
