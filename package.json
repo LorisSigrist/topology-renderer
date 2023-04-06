@@ -1,6 +1,6 @@
 {
   "name": "topology-renderer",
-  "description": "A WebGL implementation of a topology renderer",
+  "description": "A WebGL renderer that draws procedurally generated topology lines",
   "author": "Loris Sigrist",
   "version": "0.1.1",
 
