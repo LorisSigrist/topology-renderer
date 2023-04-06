@@ -3,6 +3,15 @@
   "description": "A WebGL implementation of a topology renderer",
   "author": "Loris Sigrist",
   "version": "0.1.1",
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LorisSigrist/topology-renderer"
+  },
+  
+  "homepage": "https://topology.sigrist.dev",
+  "keywords": ["webgl", "pattern"],
+
   "type": "module",
   "module": "lib_dist/index.js",
   "main": "lib_dist/index.js",
