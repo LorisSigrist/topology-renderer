@@ -12,6 +12,10 @@ export default defineConfig({
             entry: "lib/topology.js",
             formats: ["es"],
             fileName: "index",
-        }
+        },
+        //I don't like npm packages being minified
+        //The user usually has a minifier in their build pipeline 
+        //Let them do it
+        minify: false 
     },
 });

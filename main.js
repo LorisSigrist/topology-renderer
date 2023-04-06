@@ -18,6 +18,8 @@ let options = {
   speed: 1,
   background_color: [0, 0, 0],
   line_color: [255, 255, 255],
+  width: document.body.clientWidth,
+  height: document.body.clientHeight,
 };
 
 const { destroy, update } = topology(canvas, options);
@@ -49,6 +51,12 @@ speed.addEventListener("input", () => {
 
 background_color.addEventListener("input", update_background_color);
 line_color.addEventListener("input", update_line_color);
+
+window.addEventListener("resize", () => {
+  options = { ...options, width: document.body.clientWidth, height: document.body.clientHeight };
+  update(options);
+});
+
 
 /**
  * Returns the RGB values of a hex color
