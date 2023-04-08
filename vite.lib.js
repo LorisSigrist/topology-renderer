@@ -14,11 +14,8 @@ export default defineConfig({
             formats: ["es"],
             fileName: "index",
         },
-        //I don't like npm packages being minified
-        //The user usually has a minifier in their build pipeline 
-        //Let them do it
-        minify: false,
-        emptyOutDir: true,
+        minify: true,
+        emptyOutDir: true,  
     },
     worker: {
         "format": "es",

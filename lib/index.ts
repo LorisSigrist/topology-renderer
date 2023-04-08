@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import RenderWorker from "./worker?worker";
+import RenderWorker from "./worker?worker&inline";
 import type { TopologyRenderingOptions } from "./topology";
 
 
