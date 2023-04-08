@@ -13,6 +13,12 @@ const line_color = document.getElementById("line_color");
 if (!(line_color instanceof HTMLInputElement))
   throw new Error("line_color is not HTMLInputElement");
 
+const stop_button = document.getElementById("stop");
+if (!(stop_button instanceof HTMLButtonElement))
+  throw new Error("stop_button is not HTMLButtonElement");
+
+
+
 /** @type {import("./lib/index").TopologyOptions} */
 let options = {
   speed: 1,
@@ -57,6 +63,10 @@ window.addEventListener("resize", () => {
   update(options);
 });
 
+stop_button.addEventListener("click", () => {
+  destroy();
+  stop_button.disabled = true;
+});
 
 /**
  * Returns the RGB values of a hex color
@@ -70,3 +80,5 @@ function hex2rgb(hex) {
     parseInt(hex.substring(5, 7), 16),
   ];
 }
+
+

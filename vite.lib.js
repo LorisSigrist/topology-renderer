@@ -6,12 +6,11 @@ import dts from 'vite-plugin-dts'
 export default defineConfig({
     plugins: [glsl({
         compress: true
-    }),
-    dts()],
+    }),dts()],
     build: {
         outDir: "lib_dist",
         lib: {
-            entry: "lib/index.js",
+            entry: "lib/index.ts",
             formats: ["es"],
             fileName: "index",
         },
@@ -20,5 +19,11 @@ export default defineConfig({
         //Let them do it
         minify: false,
         emptyOutDir: true,
+    },
+    worker: {
+        "format": "es",
+        plugins: [glsl({
+            compress: true
+        })]
     },
 });
