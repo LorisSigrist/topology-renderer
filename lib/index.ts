@@ -1,9 +1,7 @@
-/// <reference types="vite/client" />
-import RenderWorker from "./worker?worker&inline";
-import type { TopologyRenderingOptions } from "./topology";
+import { topology as topology_optimized  } from "./optimized";
+import { topology as topology_fallback } from "./fallback";
 
-
-interface FullTopologyOptions {
+export interface FullTopologyOptions {
     background_color: [number, number, number];
     line_color: [number, number, number];
     speed: number;
@@ -21,42 +19,45 @@ const DEFAULT_OPTIONS: FullTopologyOptions = {
     height: 150,
 };
 
-export const topology = (canvas: HTMLCanvasElement, partial_options: TopologyOptions = {}) => {
-    const options = { ...DEFAULT_OPTIONS, ...partial_options };
-    set_element_size(canvas, options.width, options.height);
+export function topology(canvas: HTMLCanvasElement, options: TopologyOptions) {
+    const full_options = { ...DEFAULT_OPTIONS, ...options };
 
-    const rendering_options = get_rendering_options(options);
-    const offscreen_canvas = canvas.transferControlToOffscreen();
+    let update = (options: FullTopologyOptions) => {};
+    let destroy = () => {};
 
-    const worker = new RenderWorker();
-    worker.postMessage({ type: "init", canvas: offscreen_canvas, options: rendering_options }, [offscreen_canvas]);
+    if(supports_offscreen_and_worker()) {
+        const optimized = topology_optimized(canvas, full_options);
+        update = optimized.update;
+        destroy = optimized.destroy;
+    } else {
+        //I hate safari I hate safari I hate Safari I hate Safari
+        const fallback = topology_fallback(canvas, full_options);
+        update = fallback.update;
+        destroy = fallback.destroy;
+    }
+
 
     return {
         update: (new_partial_options: TopologyOptions) => {
             const new_options = { ...DEFAULT_OPTIONS, ...new_partial_options };
-            set_element_size(canvas, new_options.width, new_options.height);
-            const rendering_options = get_rendering_options(new_options);
-            worker.postMessage({ type: "update", options: rendering_options });
+            update(new_options);
         },
-        destroy: () => {
-            worker.postMessage({ type: "destroy" });
-            worker.terminate();
-        }
-    };
-};
-
-//Set canvas size - Dimensions are BEFORE scaling for device pixel ratio
-function set_element_size(canvas: HTMLCanvasElement, width: number, height: number) {
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+        destroy
+    }
 }
 
-function get_rendering_options(options: TopologyOptions): TopologyRenderingOptions {
-    return {
-        background_color: options.background_color,
-        line_color: options.line_color,
-        speed: options.speed,
-        render_width: options.width * window.devicePixelRatio,
-        render_height: options.height * window.devicePixelRatio
-    };
+function supports_offscreen_and_worker() : boolean {
+    if(!("Worker" in globalThis)) return false;
+    if(!("OffscreenCanvas" in globalThis)) return false;
+    if(!("transferControlToOffscreen" in HTMLCanvasElement.prototype)) return false;
+
+    try {
+        //Safari 16.4 supports OffscreenCanvas but not the WebGl rendering context on it
+        //Here we check if the webgl rendering context is supported on an OffscreenCanvas
+        const offscreen_canvas = new OffscreenCanvas(1, 1);
+        const gl = offscreen_canvas.getContext("webgl");
+        return gl instanceof WebGLRenderingContext; //If this is false, then the webgl context is not supported
+    } catch(e) {
+        return false;
+    }
 }

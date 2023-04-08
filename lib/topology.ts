@@ -14,7 +14,7 @@ export interface TopologyRenderingOptions {
     speed: number;
 }
 
-export function topology(canvas: OffscreenCanvas, options: TopologyRenderingOptions) {
+export function topology(canvas: OffscreenCanvas | HTMLCanvasElement, options: TopologyRenderingOptions) {
     const gl = get_context(canvas);
 
     const { vertex_buffer, index_buffer } = set_up_rect(gl);
@@ -87,7 +87,7 @@ export function topology(canvas: OffscreenCanvas, options: TopologyRenderingOpti
 }
 
 
-function get_context(canvas: OffscreenCanvas): WebGLRenderingContext {
+function get_context(canvas: OffscreenCanvas | HTMLCanvasElement): WebGLRenderingContext {
     const gl = canvas.getContext("webgl");
     if(!(gl instanceof WebGLRenderingContext)) throw new Error("gl is not WebGLRenderingContext");
     return gl;
