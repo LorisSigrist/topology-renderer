@@ -15,4 +15,9 @@ export default defineConfig({
             },
         },
     },
+    worker: {
+        plugins: [glsl({
+            compress: true
+        })]
+    },
 });
