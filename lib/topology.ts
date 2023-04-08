@@ -1,3 +1,4 @@
+/// <reference types="vite-plugin-glsl/ext" />
 import vertex_shader_source from "./shaders/vertex.glsl";
 import fragment_shader_source from "./shaders/fragment.glsl";
 
@@ -15,8 +16,12 @@ export interface TopologyRenderingOptions {
 
 export function topology(canvas: OffscreenCanvas, options: TopologyRenderingOptions) {
 
-    canvas.width = options.render_width;
-    canvas.height = options.render_height;
+    function set_size(width: number, height: number) {
+        canvas.width = width;
+        canvas.height = height;
+    }
+
+    set_size(options.render_width, options.render_height);
 
     const gl = get_context(canvas);
 
@@ -73,10 +78,7 @@ export function topology(canvas: OffscreenCanvas, options: TopologyRenderingOpti
             options = new_rendering_options;
             background_color = to_glsl_color(options.background_color);
             line_color = to_glsl_color(options.line_color);
-
-            canvas.width = options.render_width;
-            canvas.height = options.render_height;
-
+            set_size(options.render_width, options.render_height);
             set_viewport(gl, options.render_width, options.render_height);
         },
         destroy: () => {
@@ -96,7 +98,7 @@ export function topology(canvas: OffscreenCanvas, options: TopologyRenderingOpti
 
 function get_context(canvas: OffscreenCanvas): WebGLRenderingContext {
     const gl = canvas.getContext("webgl");
-    if (!gl) throw new Error("gl is not WebGLRenderingContext");
+    if(!(gl instanceof WebGLRenderingContext)) throw new Error("gl is not WebGLRenderingContext");
     return gl;
 }
 

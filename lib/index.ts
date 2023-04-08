@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import RenderWorker from "./worker?worker";
 import type { TopologyRenderingOptions } from "./topology";
 
