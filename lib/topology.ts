@@ -15,14 +15,6 @@ export interface TopologyRenderingOptions {
 }
 
 export function topology(canvas: OffscreenCanvas, options: TopologyRenderingOptions) {
-
-    function set_size(width: number, height: number) {
-        canvas.width = width;
-        canvas.height = height;
-    }
-
-    set_size(options.render_width, options.render_height);
-
     const gl = get_context(canvas);
 
     const { vertex_buffer, index_buffer } = set_up_rect(gl);
@@ -47,7 +39,7 @@ export function topology(canvas: OffscreenCanvas, options: TopologyRenderingOpti
     const u_time = gl.getUniformLocation(program, "time");
 
     //Set viewport
-    set_viewport(gl, options.render_width, options.render_height);
+    set_render_size(gl, options.render_width, options.render_height);
 
     let frame: number | null = null;
 
@@ -78,8 +70,7 @@ export function topology(canvas: OffscreenCanvas, options: TopologyRenderingOpti
             options = new_rendering_options;
             background_color = to_glsl_color(options.background_color);
             line_color = to_glsl_color(options.line_color);
-            set_size(options.render_width, options.render_height);
-            set_viewport(gl, options.render_width, options.render_height);
+            set_render_size(gl, options.render_width, options.render_height);
         },
         destroy: () => {
             if (frame) {
@@ -172,6 +163,8 @@ function to_glsl_color(color: [number, number, number]): [number, number, number
     return color.map((c) => c / 255);
 }
 
-function set_viewport(gl: WebGLRenderingContext, render_width: number, render_height: number) {
+function set_render_size(gl: WebGLRenderingContext, render_width: number, render_height: number) {
     gl.viewport(0, 0, render_width, render_height);
+    gl.canvas.width = render_width;
+    gl.canvas.height = render_height;
 }
