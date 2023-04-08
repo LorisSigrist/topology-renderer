@@ -3,22 +3,17 @@
 import vertex_shader_source from "./shaders/vertex.glsl";
 import fragment_shader_source from "./shaders/fragment.glsl";
 
-/**
- * @typedef {{
- *  background_color: [number, number, number],
- *  line_color: [number, number, number],
- *  speed : number,
- *  width: number,
- *  height: number,
- * }} FullTopologyOptions
- */
+interface FullTopologyOptions {
+  background_color: [number, number, number];
+  line_color: [number, number, number];
+  speed: number;
+  width: number;
+  height: number;
+}
 
-/**
- * @typedef {Partial<FullTopologyOptions>} TopologyOptions
- */
+export type TopologyOptions = Partial<FullTopologyOptions>;
 
-/** @type {FullTopologyOptions} */
-const DEFAULT_OPTIONS = {
+const DEFAULT_OPTIONS: FullTopologyOptions = {
   background_color: [0, 22, 37],
   line_color: [41, 56, 76],
   speed: 1,
@@ -26,12 +21,8 @@ const DEFAULT_OPTIONS = {
   height: 150,
 };
 
-/**
- * Draws an animated topology map on the given canvas
- * @param {HTMLCanvasElement} canvas
- * @param {TopologyOptions} partial_options
- */
-export const topology = (canvas, partial_options = {}) => {
+
+export const topology = (canvas: HTMLCanvasElement, partial_options: TopologyOptions = {}) => {
   let options = { ...DEFAULT_OPTIONS, ...partial_options };
 
   // Initialize WebGL
@@ -118,24 +109,14 @@ export const topology = (canvas, partial_options = {}) => {
   };
 };
 
-/**
- * Return WebGLRenderingContext or throw
- * @param {HTMLCanvasElement} canvas
- * @returns {WebGLRenderingContext}
- */
-function get_context(canvas) {
+
+function get_context(canvas: HTMLCanvasElement): WebGLRenderingContext {
   const gl = canvas.getContext("webgl");
   if (!gl) throw new Error("gl is not WebGLRenderingContext");
   return gl;
 }
 
-/**
- * Sets up and binds the vertex and index buffers for the quad,
- * and returns a function that will delete them
- *
- * @param {WebGLRenderingContext} gl
- */
-function set_up_rect(gl) {
+function set_up_rect(gl: WebGLRenderingContext) {
   //Initialize and Bind Vertex Buffer for Quad
   const vertex_buffer = gl.createBuffer();
   const index_buffer = gl.createBuffer();
@@ -154,20 +135,10 @@ function set_up_rect(gl) {
   return { vertex_buffer, index_buffer };
 }
 
-/**
- * Creates a WebGLProgram from the given vertex and fragment shader code
- * @param {WebGLRenderingContext} gl
- * @param {string} vertex_shader_code
- * @param {string} fragment_shader_code
- * @returns {{
- * program: WebGLProgram,
- * vertex_shader: WebGLShader,
- * fragment_shader: WebGLShader}}
- */
-function create_program(gl, vertex_shader_code, fragment_shader_code) {
+function create_program(gl: WebGLRenderingContext, vertex_shader_code: string, fragment_shader_code: string) {
   const vertex_shader = gl.createShader(gl.VERTEX_SHADER);
   if (!vertex_shader) throw new Error("vertexShader is not WebGLShader");
-  gl.shaderSource(vertex_shader, vertex_shader_source);
+  gl.shaderSource(vertex_shader, vertex_shader_code);
   gl.compileShader(vertex_shader);
   if (!gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)) {
     console.error(
@@ -182,7 +153,7 @@ function create_program(gl, vertex_shader_code, fragment_shader_code) {
 
   const fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
   if (!fragment_shader) throw new Error("fragmentShader is not WebGLShader");
-  gl.shaderSource(fragment_shader, fragment_shader_source);
+  gl.shaderSource(fragment_shader, fragment_shader_code);
   gl.compileShader(fragment_shader);
   if (!gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)) {
     console.error(
@@ -210,12 +181,7 @@ function create_program(gl, vertex_shader_code, fragment_shader_code) {
   return { program, vertex_shader, fragment_shader };
 }
 
-/**
- * Converts a color from [r, g, b] to [r/255, g/255, b/255], since WebGL uses 0.0-1.0 colors instead of 0-255
- * @param {[number, number, number]} color
- * @returns {[number, number, number]}
- */
-function to_glsl_color(color) {
+function to_glsl_color(color: [number, number, number]) : [number, number, number] {
   // @ts-ignore
   return color.map((c) => c / 255);
 }
