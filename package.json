@@ -2,7 +2,7 @@
   "name": "topology-renderer",
   "description": "A WebGL renderer that draws procedurally generated topology lines",
   "author": "Loris Sigrist",
-  "version": "0.1.1",
+  "version": "0.1.2",
 
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
     "lib_dist",
     "thumbnail.png"
   ],
+  "types": "lib_dist/index.d.ts",
   "scripts": {
     "dev": "vite --config ./vite.site.js",
     "build:site": "vite build --config ./vite.site.js",
