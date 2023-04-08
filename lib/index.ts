@@ -23,46 +23,19 @@ const DEFAULT_OPTIONS: FullTopologyOptions = {
 
 export const topology = (canvas: HTMLCanvasElement, partial_options: TopologyOptions = {}) => {
     const options = { ...DEFAULT_OPTIONS, ...partial_options };
+    set_element_size(canvas, options.width, options.height);
 
-
-    //Set canvas size - Dimensions are BEFORE scaling for device pixel ratio
-    const set_element_properties = (width: number, height: number) => {
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-    }
-
-    set_element_properties(options.width, options.height);
-
-    const rendering_options: TopologyRenderingOptions = {
-        background_color: options.background_color,
-        line_color: options.line_color,
-        speed: options.speed,
-        render_width: options.width * window.devicePixelRatio,
-        render_height: options.height * window.devicePixelRatio
-    }
-
-    // Get offscreen canvas
+    const rendering_options = get_rendering_options(options);
     const offscreen_canvas = canvas.transferControlToOffscreen();
 
-    // Initialize worker
     const worker = new RenderWorker();
-
-    // Transfer canvas to worker and initialize
     worker.postMessage({ type: "init", canvas: offscreen_canvas, options: rendering_options }, [offscreen_canvas]);
 
     return {
         update: (new_partial_options: TopologyOptions) => {
             const new_options = { ...DEFAULT_OPTIONS, ...new_partial_options };
-            set_element_properties(new_options.width, new_options.height);
-
-            const rendering_options: TopologyRenderingOptions = {
-                background_color: new_options.background_color,
-                line_color: new_options.line_color,
-                speed: new_options.speed,
-                render_width: new_options.width * window.devicePixelRatio,
-                render_height: new_options.height * window.devicePixelRatio
-            }
-            
+            set_element_size(canvas, new_options.width, new_options.height);
+            const rendering_options = get_rendering_options(new_options);
             worker.postMessage({ type: "update", options: rendering_options });
         },
         destroy: () => {
@@ -71,3 +44,19 @@ export const topology = (canvas: HTMLCanvasElement, partial_options: TopologyOpt
         }
     };
 };
+
+//Set canvas size - Dimensions are BEFORE scaling for device pixel ratio
+function set_element_size(canvas: HTMLCanvasElement, width: number, height: number) {
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+}
+
+function get_rendering_options(options: TopologyOptions): TopologyRenderingOptions {
+    return {
+        background_color: options.background_color,
+        line_color: options.line_color,
+        speed: options.speed,
+        render_width: options.width * window.devicePixelRatio,
+        render_height: options.height * window.devicePixelRatio
+    };
+}
